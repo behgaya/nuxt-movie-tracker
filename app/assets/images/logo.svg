@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round">
+  <!-- clapperboard top (striped arm) -->
+  <path d="M8 22 L54 10 L57 20 L11 32 Z" fill="#fff" fill-opacity=".15"/>
+  <path d="M20 19 L26 28 M32 16 L38 25 M44 13 L50 22"/>
+  <!-- board body -->
+  <rect x="10" y="32" width="46" height="24" rx="3" fill="#fff" fill-opacity=".15"/>
+  <!-- play triangle -->
+  <path d="M29 38 L39 44 L29 50 Z" fill="#fff" stroke="none"/>
+</svg>
