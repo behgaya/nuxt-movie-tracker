@@ -18,14 +18,14 @@ A **Nuxt 4** frontend and a **Symfony 8** API, kept together in one repository.
 
 ```
 Browser ──► Nuxt (pages, SSR) ──/api/**──► Symfony API ──► PostgreSQL
-            my-app/, port 3000             api/, port 8000  └──► TMDB
+            frontend/, port 3000           api/, port 8000  └──► TMDB
 ```
 
 The browser only talks to Nuxt. Nuxt forwards every `/api/**` request to Symfony, cookies included, so there is no CORS setup. Only Symfony reaches the database and TMDB, and the TMDB key never leaves the server.
 
 | Folder | What it is | Stack |
 | --- | --- | --- |
-| [`my-app/`](my-app) | the frontend: pages, components, login state | Nuxt 4, Vue 3, Vuetify |
+| [`frontend/`](frontend) | the frontend: pages, components, login state | Nuxt 4, Vue 3, Vuetify |
 | [`api/`](api) | the backend: accounts, watched lists, TMDB proxy | Symfony 8.1, PHP 8.5, Doctrine, PostgreSQL 17, Docker |
 
 ## Getting started
@@ -53,7 +53,7 @@ The API now runs on http://localhost:8000. It only listens on localhost, so nobo
 In a second terminal:
 
 ```bash
-cd nuxt-movie-tracker/my-app
+cd nuxt-movie-tracker/frontend
 npm install
 npm run dev
 ```
@@ -75,7 +75,7 @@ docker compose exec php bin/phpunit
 ## More documentation
 
 - [`api/README.md`](api/README.md): every API route, how the code is organized, and what to change before production
-- [`my-app/README.md`](my-app/README.md): frontend scripts and structure
+- [`frontend/README.md`](frontend/README.md): frontend scripts and structure
 
 ## Credits
 
