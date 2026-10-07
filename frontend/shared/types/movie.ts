@@ -22,7 +22,8 @@ export interface TmdbMovie {
   poster_path: string | null
   release_date?: string
   overview: string
-  vote_average: number
+  vote_average: number // TMDB user score, 0–10
+  vote_count: number
 }
 
 /** One movie from GET /api/recommendations; "because" holds the titles of the watched movies that led to it */

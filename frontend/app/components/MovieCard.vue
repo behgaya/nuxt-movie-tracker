@@ -1,6 +1,6 @@
 <script setup lang="ts">
-defineProps<{
-  movie: { id: number, title: string, poster_path: string | null, release_date?: string }
+const props = defineProps<{
+  movie: { id: number, title: string, poster_path: string | null, release_date?: string, vote_average?: number, vote_count?: number }
   watched: boolean
   review?: { rating?: number, review?: string }
   selectable?: boolean
@@ -11,6 +11,13 @@ defineEmits<{ toggle: [], review: [], select: [] }>()
 
 // The poster opens the detail page, except in selection mode where a click selects the card
 const NuxtLink = resolveComponent('NuxtLink')
+
+const year = computed(() => props.movie.release_date?.slice(0, 4))
+
+// TMDB's user score (0–10). Hidden below 50 votes, where a 10.0 from a handful of people would mislead.
+// Watched movies don't store it, so cards on the Watched page show no score.
+const MIN_VOTES = 50
+const score = computed(() => (props.movie.vote_count ?? 0) >= MIN_VOTES ? props.movie.vote_average?.toFixed(1) : undefined)
 </script>
 
 <template>
@@ -45,7 +52,12 @@ const NuxtLink = resolveComponent('NuxtLink')
 
     <div class="px-3 pt-2">
       <NuxtLink :to="`/movies/${movie.id}`" class="movie-title text-body-1">{{ movie.title }}</NuxtLink>
-      <div v-if="movie.release_date" class="text-caption text-medium-emphasis">{{ movie.release_date.slice(0, 4) }}</div>
+      <div v-if="year || score" class="text-caption text-medium-emphasis d-flex align-center ga-2">
+        <span v-if="year">{{ year }}</span>
+        <span v-if="score" class="d-inline-flex align-center" :title="`TMDB user score, from ${movie.vote_count?.toLocaleString()} votes`">
+          <v-icon icon="mdi-star" size="12" class="mr-1" />{{ score }}
+        </span>
+      </div>
       <!-- Optional extra line from the page, e.g. "Because you watched Dune" -->
       <slot />
     </div>

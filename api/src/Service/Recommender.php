@@ -19,6 +19,9 @@ final class Recommender
 
     public const LIMIT = 20;
 
+    /** Below this many TMDB votes a score means little, so the movie is left out */
+    public const MIN_VOTES = 50;
+
     public function __construct(
         private readonly WatchedMovieRepository $movies,
         private readonly TmdbClient $tmdb,
@@ -46,7 +49,7 @@ final class Recommender
             $weight = $this->weight($seed);
             foreach ($results as $rank => $movie) {
                 $id = $movie['id'];
-                if (isset($watchedIds[$id])) {
+                if (isset($watchedIds[$id]) || ($movie['vote_count'] ?? 0) < self::MIN_VOTES) {
                     continue;
                 }
                 // TMDB lists its best matches first, so earlier results count slightly more
@@ -56,6 +59,9 @@ final class Recommender
             }
         }
 
+        foreach ($scores as $id => $score) {
+            $scores[$id] = $score * $this->quality($found[$id]['vote_average'] ?? 0);
+        }
         arsort($scores);
 
         return array_map(fn (int $id) => [
@@ -65,6 +71,7 @@ final class Recommender
             'release_date' => $found[$id]['release_date'] ?? '',
             'overview' => $found[$id]['overview'] ?? '',
             'vote_average' => $found[$id]['vote_average'] ?? 0,
+            'vote_count' => $found[$id]['vote_count'] ?? 0,
             'because' => $because[$id],
         ], \array_slice(array_keys($scores), 0, self::LIMIT));
     }
@@ -84,6 +91,16 @@ final class Recommender
         usort($liked, fn (WatchedMovie $a, WatchedMovie $b) => ($b->getRating() ?? 3) <=> ($a->getRating() ?? 3));
 
         return \array_slice($liked, 0, self::MAX_SEEDS);
+    }
+
+    /**
+     * A gentle nudge from the TMDB score (0–10): 0.8 for a 0, 0.96 for an 8, 1.0 for a 10.
+     * It reorders movies your list likes about equally, but never beats a movie that more
+     * of your seeds recommend; otherwise every list would fill up with the same classics.
+     */
+    private function quality(float $voteAverage): float
+    {
+        return 0.8 + $voteAverage / 50;
     }
 
     /** 5 stars counts three times as much as an unrated or 3-star movie */
