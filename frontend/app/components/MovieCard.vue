@@ -46,6 +46,8 @@ const NuxtLink = resolveComponent('NuxtLink')
     <div class="px-3 pt-2">
       <NuxtLink :to="`/movies/${movie.id}`" class="movie-title text-body-1">{{ movie.title }}</NuxtLink>
       <div v-if="movie.release_date" class="text-caption text-medium-emphasis">{{ movie.release_date.slice(0, 4) }}</div>
+      <!-- Optional extra line from the page, e.g. "Because you watched Dune" -->
+      <slot />
     </div>
 
     <!-- Reviews are only for watched movies; clicking opens the review dialog -->

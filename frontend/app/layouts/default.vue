@@ -20,6 +20,10 @@ async function logout() {
     <v-app-bar-title class="brand d-none d-sm-flex">My <span class="text-primary">Movies</span></v-app-bar-title>
     <v-btn to="/" variant="text" active-color="primary" prepend-icon="mdi-check-circle-outline" exact>Watched</v-btn>
     <v-btn to="/movies" variant="text" active-color="primary" prepend-icon="mdi-movie-search-outline" >All movies</v-btn>
+    <!-- Icon only on phones, so three buttons still fit next to the logo -->
+    <v-btn to="/recommended" variant="text" active-color="primary" prepend-icon="mdi-star-shooting-outline" title="For you">
+      <span class="d-none d-sm-inline">For you</span>
+    </v-btn>
 
     <v-menu v-if="user" location="bottom end">
       <template #activator="{ props }">

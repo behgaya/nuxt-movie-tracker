@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#F5B50A" stroke-width="5" stroke-linejoin="round">
+  <!-- Same clapperboard as app/assets/images/logo.svg, in the theme's amber (primary) so it shows on light and dark tabs -->
+  <path d="M8 22 L54 10 L57 20 L11 32 Z" fill="#F5B50A" fill-opacity=".25"/>
+  <path d="M20 19 L26 28 M32 16 L38 25 M44 13 L50 22"/>
+  <rect x="10" y="32" width="46" height="24" rx="3" fill="#F5B50A" fill-opacity=".25"/>
+  <path d="M29 38 L39 44 L29 50 Z" fill="#F5B50A" stroke="none"/>
+</svg>

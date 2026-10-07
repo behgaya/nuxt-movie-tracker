@@ -7,7 +7,7 @@ const props = defineProps<{ error: NuxtError }>()
 const notFound = computed(() => props.error.statusCode === 404)
 
 // app.vue (and its title template) isn't rendered here, so write the full title
-useSeoMeta({ title: () => `${notFound.value ? 'Not found' : 'Error'} · My Movies` })
+useSeoMeta({ title: () => `${notFound.value ? 'Not found' : 'Error'} · Movie Tracker` })
 
 // clearError resets the error state, then navigates
 const goHome = () => clearError({ redirect: '/' })

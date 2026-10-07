@@ -51,6 +51,16 @@ final class TmdbClient
         });
     }
 
+    /** Movies TMDB recommends to people who liked this one (cached for one day) */
+    public function recommendations(int $id): array
+    {
+        return $this->cache->get('tmdb.recommendations.'.$id, function (ItemInterface $item) use ($id) {
+            $item->expiresAfter(86400);
+
+            return $this->get('/3/movie/'.$id.'/recommendations', ['page' => 1]);
+        });
+    }
+
     private function get(string $path, array $query): array
     {
         // v4 read access tokens are JWTs (contain dots); v3 API keys are 32-char hex strings

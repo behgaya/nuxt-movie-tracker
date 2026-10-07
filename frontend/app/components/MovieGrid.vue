@@ -12,6 +12,9 @@ const emit = defineEmits<{
   select: [id: number]
 }>()
 
+// Optional line under each card's title, filled by the page: <template #note="{ movie }">
+defineSlots<{ note?: (props: { movie: T }) => any }>()
+
 // One dialog shared by every card in the grid
 const dialogOpen = ref(false)
 const reviewing = ref<WatchedMovie | null>(null)
@@ -34,7 +37,9 @@ function openReview(id: number) {
         @toggle="emit('toggle', movie)"
         @review="openReview(movie.id)"
         @select="emit('select', movie.id)"
-      />
+      >
+        <slot name="note" :movie="movie" />
+      </MovieCard>
     </v-col>
   </v-row>
 

@@ -60,6 +60,16 @@ class WatchedMovie
         return $this->tmdbId;
     }
 
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getRating(): ?int
+    {
+        return $this->rating;
+    }
+
     /** null or '' clears the field */
     public function setReview(?int $rating, ?string $review): void
     {

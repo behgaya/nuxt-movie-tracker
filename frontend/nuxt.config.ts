@@ -4,6 +4,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   modules: ['vuetify-nuxt-module'],
+
+  app: {
+    head: {
+      // The app's clapperboard logo (public/favicon.svg) as the browser tab icon
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    },
+  },
   css: ['~/assets/css/main.css'],
 
   vuetify: {

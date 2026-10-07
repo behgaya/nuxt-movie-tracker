@@ -25,6 +25,11 @@ export interface TmdbMovie {
   vote_average: number
 }
 
+/** One movie from GET /api/recommendations; "because" holds the titles of the watched movies that led to it */
+export interface RecommendedMovie extends TmdbMovie {
+  because: string[]
+}
+
 export interface TmdbPage {
   page: number
   results: TmdbMovie[]
