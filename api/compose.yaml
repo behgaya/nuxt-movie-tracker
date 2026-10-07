@@ -1,0 +1,48 @@
+
+services:
+  php:
+    build: .
+    # Serves public/index.php on http://localhost:8000
+    command: frankenphp php-server --listen :8000 --root public/
+    # Run as your host user, so files written to var/ and vendor/ stay yours
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      # Localhost only: Nuxt reaches it on localhost, nobody else on the network can
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      XDG_CONFIG_HOME: /tmp/caddy-config
+      XDG_DATA_HOME: /tmp/caddy-data
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-17}&charset=utf8
+    # The image's own check expects Caddy's admin port; check the API instead
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/api/auth/me"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      database:
+        condition: service_healthy
+
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-17}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
