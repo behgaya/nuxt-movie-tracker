@@ -1,6 +1,6 @@
 # Movie Tracker API
 
-The Symfony backend for [`../my-app`](../my-app). It handles accounts, each user's watched list, and a TMDB proxy that keeps the TMDB key on the server.
+The Symfony backend for [`../frontend`](../frontend). It handles accounts, each user's watched list, and a TMDB proxy that keeps the TMDB key on the server.
 
 Built with **Symfony 8.1** (PHP 8.5), **Doctrine ORM** on **PostgreSQL 17**, and served by **FrankenPHP** in Docker.
 
