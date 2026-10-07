@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15', // keep whatever date your project already has
   devtools: { enabled: true },
 
-  modules: ['vuetify-nuxt-module', 'nuxt-auth-utils'],
+  modules: ['vuetify-nuxt-module'],
   css: ['~/assets/css/main.css'],
 
   vuetify: {
@@ -36,7 +36,9 @@ export default defineNuxtConfig({
     },
   },
 
-  runtimeConfig: {
-    tmdbToken: '', // filled from NUXT_TMDB_TOKEN in .env, only available on the server
+  // The API is the Symfony app in ../api. Nuxt forwards /api/** to it (cookies included),
+  // so the browser only ever talks to one origin: no CORS, and the session cookie just works.
+  routeRules: {
+    '/api/**': { proxy: `${process.env.API_URL || 'http://localhost:8000'}/api/**` },
   },
 })

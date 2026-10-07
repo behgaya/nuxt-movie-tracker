@@ -30,7 +30,7 @@ function save() {
       <div class="d-flex align-center ga-4 pa-5 pb-2">
         <v-img
           v-if="movie.poster_path"
-          :src="`https://image.tmdb.org/t/p/w154${movie.poster_path}`"
+          :src="tmdbImage(movie.poster_path, 'w154')"
           width="56"
           :aspect-ratio="2 / 3"
           class="rounded flex-grow-0"

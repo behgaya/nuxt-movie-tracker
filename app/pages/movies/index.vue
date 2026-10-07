@@ -1,7 +1,16 @@
 <script setup lang="ts">
-const input = ref('')
-const q = ref('')
-const page = ref(1)
+useSeoMeta({ title: 'Discover' })
+
+// The search lives in the URL (/movies?q=dune&page=2), so refresh, back/forward and shared links keep it
+const route = useRoute()
+const q = computed(() => typeof route.query.q === 'string' ? route.query.q : '')
+const page = computed({
+  get: () => Math.max(1, Number(route.query.page) || 1),
+  set: value => navigateTo({ query: { ...route.query, page: value > 1 ? value : undefined } }),
+})
+
+const input = ref(q.value)
+watch(q, value => input.value = value) // back/forward updates the search box too
 
 const { data, status } = await useFetch('/api/movies', {
   query: { q, page },
@@ -10,8 +19,7 @@ const { data, status } = await useFetch('/api/movies', {
 const { watchedById, toggle, bulkUpdate, saveReview } = useWatched()
 
 function search() {
-  q.value = input.value ?? ''
-  page.value = 1
+  navigateTo({ query: { q: input.value?.trim() || undefined } }) // a new search starts at page 1
 }
 
 // ── Selection ──────────────────────────────────────────

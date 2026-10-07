@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useSeoMeta({ title: 'Watched' })
+
 const { watched, status, watchedById, unmarkWatched, bulkUpdate, saveReview } = useWatched()
 
 const filter = ref('')

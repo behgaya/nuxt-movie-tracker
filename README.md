@@ -17,37 +17,32 @@ Built with **Nuxt 4**, **Vue 3** and **Vuetify**.
 
 | Layer     | Tools                                                                                |
 | --------- | ------------------------------------------------------------------------------------ |
-| Framework | [Nuxt 4](https://nuxt.com) (Vue 3, Nitro server)                                     |
-| UI        | [Vuetify](https://vuetifyjs.com) + [Material Design Icons](https://pictogrammers.com/library/mdi/) |
-| Auth      | [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils)                         |
-| Data      | [TMDB API](https://developer.themoviedb.org/) + Nitro storage (file-based key-value) |
+| Frontend  | [Nuxt 4](https://nuxt.com) (Vue 3, SSR) + [Vuetify](https://vuetifyjs.com) + [Material Design Icons](https://pictogrammers.com/library/mdi/) |
+| API       | [Symfony 8](https://symfony.com) in [`../api`](../api): Security, Validator, Doctrine ORM, HttpClient |
+| Data      | PostgreSQL + the [TMDB API](https://developer.themoviedb.org/)                       |
+
+```
+Browser ──► Nuxt (pages, SSR) ──/api/**──► Symfony API ──► PostgreSQL
+                                                 └───────► TMDB
+```
+
+Nuxt has no server routes of its own: `routeRules` in `nuxt.config.ts` proxies every `/api/**` request to Symfony, cookies included. The browser only talks to one origin, so there is no CORS setup and the Symfony session cookie works as is.
 
 ## Getting started
 
 ### Requirements
 
 - Node.js 20 or later
+- Docker (the API runs in containers)
 - A free TMDB account and API key: https://www.themoviedb.org/settings/api
-
-### Setup
-
-```bash
-git clone https://github.com/behgaya/nuxt-movie-tracker.git
-cd nuxt-movie-tracker
-npm install
-cp .env.example .env
-```
-
-Fill in `.env`:
-
-| Variable                | Description                                                                         |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `NUXT_TMDB_TOKEN`       | Your TMDB **v3 API key** or **v4 read access token**. Either works.                 |
-| `NUXT_SESSION_PASSWORD` | Secret used to encrypt the login cookie, at least 32 characters. Generate one with `openssl rand -hex 32`. |
 
 ### Run
 
+Start the API first (see [`../api/README.md`](../api/README.md)), then:
+
 ```bash
+npm install
+cp .env.example .env   # only needed if the API is not on http://localhost:8000
 npm run dev
 ```
 
@@ -65,38 +60,17 @@ Open http://localhost:3000, create an account, and start adding movies.
 
 ```
 app/
-  pages/          index (watched list), movies (discover), login
+  pages/          index (watched list), movies (discover + details), login
   components/     MovieCard, MovieGrid, ReviewDialog, SelectionBar, ConfirmDialog
-  composables/    useWatched (list state + API calls), useSelection
+  composables/    useWatched (list state + API calls), useSelection, useAuth (logged-in user)
+  plugins/        auth.ts: loads the logged-in user before the first page renders
   middleware/     auth.global.ts: redirects to /login when signed out
-server/
-  api/auth/       login and register
-  api/movies      TMDB proxy (popular + search, cached for 1 hour)
-  api/watched/    CRUD for the watched list, plus bulk add/remove
-  utils/          user store, watched-list store, input validation
-shared/types/     types shared by the client and the server
+shared/types/     types for the API's responses
 ```
 
 ## API
 
-Every route except `auth/*` requires a logged-in session.
-
-| Method   | Route                  | Description                                     |
-| -------- | ---------------------- | ----------------------------------------------- |
-| `POST`   | `/api/auth/register`   | Create an account and log in                    |
-| `POST`   | `/api/auth/login`      | Log in                                          |
-| `GET`    | `/api/movies?q=&page=` | Popular movies, or search results when `q` is set |
-| `GET`    | `/api/watched`         | Your watched list, newest first                 |
-| `POST`   | `/api/watched`         | Mark a movie as watched                         |
-| `PATCH`  | `/api/watched/:id`     | Set or clear the rating and review              |
-| `DELETE` | `/api/watched/:id`     | Remove a movie from the list                    |
-| `POST`   | `/api/watched/bulk`    | Add and remove many movies in one request (`{ add, remove }`) |
-
-The TMDB key only ever lives on the server. The browser talks to `/api/movies`, which is restricted to logged-in users, so the key can't be read or abused from outside.
-
-## Data storage
-
-Users and watched lists are saved as JSON files in `.data/kv/`, using Nitro's default `data` storage. That folder is git-ignored. This is fine for local use and small deployments. For serverless or multi-instance hosting, point the `data` storage at Redis, a database or another [unstorage driver](https://unstorage.unjs.io/drivers) in `nuxt.config.ts`.
+The API, its routes and its tests are documented in [`../api/README.md`](../api/README.md).
 
 ## Credits
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
+useSeoMeta({ title: 'Log in' })
 
-const { fetch: fetchSession } = useUserSession()
+const { fetch: fetchSession } = useAuth()
 
 const mode = ref<'login' | 'register'>('login')
 const username = ref('')
@@ -33,7 +34,7 @@ async function submit() {
       method: 'POST',
       body: { username: username.value, password: password.value },
     })
-    await fetchSession() // pull the new session into useUserSession()
+    await fetchSession() // pull the new session into useAuth()
     await refreshNuxtData('watched') // load this user's list, not a previous one
     await navigateTo('/')
   }

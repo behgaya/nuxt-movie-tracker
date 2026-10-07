@@ -1,8 +1,8 @@
 <script setup lang="ts">
-const { user, clear } = useUserSession()
+const { user, clear } = useAuth()
 
 async function logout() {
-  await clear() // deletes the session cookie
+  await clear() // ends the session on the API
   clearNuxtData('watched') // forget this user's cached list
   await navigateTo('/login')
 }

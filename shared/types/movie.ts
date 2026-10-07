@@ -31,3 +31,18 @@ export interface TmdbPage {
   total_pages: number
   total_results: number
 }
+
+/** TMDB's /movie/{id} with credits and videos appended (only the fields we use) */
+export interface TmdbMovieDetails extends TmdbMovie {
+  backdrop_path: string | null
+  tagline: string
+  runtime: number | null
+  genres: { id: number, name: string }[]
+  credits: {
+    cast: { id: number, name: string, character: string, profile_path: string | null }[]
+    crew: { id: number, name: string, job: string }[]
+  }
+  videos: {
+    results: { key: string, site: string, type: string, official: boolean }[]
+  }
+}

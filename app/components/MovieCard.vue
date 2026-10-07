@@ -8,12 +8,20 @@ defineProps<{
 }>()
 
 defineEmits<{ toggle: [], review: [], select: [] }>()
+
+// The poster opens the detail page, except in selection mode where a click selects the card
+const NuxtLink = resolveComponent('NuxtLink')
 </script>
 
 <template>
   <v-card class="movie-card h-100 d-flex flex-column" :class="{ 'is-selected': selected }">
     <!-- In selection mode the whole poster is a big click target -->
-    <div class="poster" :class="{ 'cursor-pointer': selectable }" @click="selectable && $emit('select')">
+    <component
+      :is="selectable ? 'div' : NuxtLink"
+      :to="selectable ? undefined : `/movies/${movie.id}`"
+      class="poster d-block cursor-pointer"
+      @click="selectable && $emit('select')"
+    >
       <v-checkbox-btn
         v-if="selectable"
         :model-value="selected"
@@ -23,7 +31,7 @@ defineEmits<{ toggle: [], review: [], select: [] }>()
       />
       <v-img
         v-if="movie.poster_path"
-        :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
+        :src="tmdbImage(movie.poster_path, 'w500')"
         :aspect-ratio="2 / 3"
         cover
       />
@@ -33,10 +41,10 @@ defineEmits<{ toggle: [], review: [], select: [] }>()
       <v-avatar v-if="watched" color="success" size="28" class="watched-badge">
         <v-icon icon="mdi-check" size="18" />
       </v-avatar>
-    </div>
+    </component>
 
     <div class="px-3 pt-2">
-      <div class="movie-title text-body-1">{{ movie.title }}</div>
+      <NuxtLink :to="`/movies/${movie.id}`" class="movie-title text-body-1">{{ movie.title }}</NuxtLink>
       <div v-if="movie.release_date" class="text-caption text-medium-emphasis">{{ movie.release_date.slice(0, 4) }}</div>
     </div>
 

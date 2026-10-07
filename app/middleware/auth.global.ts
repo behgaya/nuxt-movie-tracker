@@ -1,7 +1,7 @@
 // Runs before every page. Only a convenience redirect: the real protection is
-// requireUserSession() in the server API routes.
+// access_control in the Symfony API (api/config/packages/security.yaml).
 export default defineNuxtRouteMiddleware((to) => {
-  const { loggedIn } = useUserSession()
+  const { loggedIn } = useAuth()
 
   if (!loggedIn.value && to.path !== '/login') {
     return navigateTo('/login')
