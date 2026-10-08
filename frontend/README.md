@@ -33,9 +33,9 @@ Nuxt has no server routes of its own: `routeRules` in `nuxt.config.ts` proxies e
 
 ```
 app/
-  pages/          index (watched list), movies (discover + details), login
+  pages/          index (watched list), want (want-to-watch list), movies (discover + details), login
   components/     MovieCard, MovieGrid, ReviewDialog, SelectionBar, ConfirmDialog
-  composables/    useWatched (list state + API calls), useSelection, useAuth (logged-in user)
+  composables/    useWatched (list state + API calls), useWantToWatch, useSelection, useAuth (logged-in user)
   plugins/        auth.ts: loads the logged-in user before the first page renders
   middleware/     auth.global.ts: redirects to /login when signed out
   utils/          tmdbImage: builds TMDB image URLs

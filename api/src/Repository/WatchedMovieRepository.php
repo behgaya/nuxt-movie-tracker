@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\User;
 use App\Entity\WatchedMovie;
+use App\Enum\MovieStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -15,19 +16,22 @@ class WatchedMovieRepository extends ServiceEntityRepository
         parent::__construct($registry, WatchedMovie::class);
     }
 
-    /** @return list<WatchedMovie> newest first */
-    public function listFor(User $user): array
+    /** @return list<WatchedMovie> newest first: by watch date for the watched list, by add date for the want list */
+    public function listFor(User $user, MovieStatus $status): array
     {
-        return $this->findBy(['user' => $user], ['watchedAt' => 'DESC', 'id' => 'DESC']);
+        $date = MovieStatus::Watched === $status ? 'watchedAt' : 'addedAt';
+
+        return $this->findBy(['user' => $user, 'status' => $status], [$date => 'DESC', 'id' => 'DESC']);
     }
 
-    public function findOneFor(User $user, int $tmdbId): ?WatchedMovie
+    /** With no status, finds the movie in either list */
+    public function findOneFor(User $user, int $tmdbId, ?MovieStatus $status = null): ?WatchedMovie
     {
-        return $this->findOneBy(['user' => $user, 'tmdbId' => $tmdbId]);
+        return $this->findOneBy(['user' => $user, 'tmdbId' => $tmdbId] + ($status ? ['status' => $status] : []));
     }
 
     /** @param list<int> $tmdbIds */
-    public function removeFor(User $user, array $tmdbIds): void
+    public function removeFor(User $user, MovieStatus $status, array $tmdbIds): void
     {
         if (!$tmdbIds) {
             return;
@@ -35,8 +39,9 @@ class WatchedMovieRepository extends ServiceEntityRepository
 
         $this->createQueryBuilder('m')
             ->delete()
-            ->where('m.user = :user AND m.tmdbId IN (:ids)')
+            ->where('m.user = :user AND m.status = :status AND m.tmdbId IN (:ids)')
             ->setParameter('user', $user)
+            ->setParameter('status', $status)
             ->setParameter('ids', $tmdbIds)
             ->getQuery()
             ->execute();

@@ -10,6 +10,7 @@ A **Nuxt 4** frontend and a **Symfony 8** API, kept together in one repository.
 - **Discover.** See what's popular right now or search any movie, with pagination.
 - **Movie pages.** Details, cast, director and the trailer for every movie.
 - **Watched list.** Mark or unmark movies with one click, then filter by title or sort by most recent, highest rated or title.
+- **Want to watch.** Bookmark movies to see later. Marking one as seen moves it to your watched list.
 - **Ratings and reviews.** Rate a movie from 1 to 5 stars and write a review of up to 1000 characters.
 - **Bulk actions.** Select several movies at once to add them to or remove them from your list.
 - **Dark "cinema" theme** that works on desktop and mobile.

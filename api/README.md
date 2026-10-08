@@ -30,7 +30,7 @@ docker compose exec php sh -c 'bin/console doctrine:database:create --env=test &
 
 ## Routes
 
-Every route except `/api/auth/*` needs a logged-in session. Errors are always JSON: `{ "statusCode": 400, "message": "..." }`. Every `/api/watched` route answers with the whole updated list, newest first.
+Every route except `/api/auth/*` needs a logged-in session. Errors are always JSON: `{ "statusCode": 400, "message": "..." }`. Every `/api/watched` and `/api/want` route answers with the whole updated list, newest first.
 
 | Method   | Route                  | Description |
 | -------- | ---------------------- | ----------- |
@@ -41,20 +41,24 @@ Every route except `/api/auth/*` needs a logged-in session. Errors are always JS
 | `GET`    | `/api/movies?q=&page=` | TMDB popular movies, or search results when `q` is set. `page` 1–500. Cached 1 hour. |
 | `GET`    | `/api/movies/{id}`     | TMDB details with credits and videos. Cached 1 day. |
 | `GET`    | `/api/watched`         | The watched list |
-| `POST`   | `/api/watched`         | `{ id, title, poster_path?, release_date? }` marks a movie as watched. Does nothing if it is already in the list. |
+| `POST`   | `/api/watched`         | `{ id, title, poster_path?, release_date? }` marks a movie as watched. A wanted movie moves from the want list. Does nothing if it is already watched. |
 | `PATCH`  | `/api/watched/{id}`    | `{ rating: 1–5 \| null, review: string ≤ 1000 }`. Empty values clear the field. |
 | `DELETE` | `/api/watched/{id}`    | Removes a movie |
-| `POST`   | `/api/watched/bulk`    | `{ add: Movie[], remove: id[] }`, at most 500 items, in one transaction |
+| `POST`   | `/api/watched/bulk`    | `{ add: Movie[], remove: id[] }`, at most 500 items, in one transaction. Like `POST /api/watched`, it moves wanted movies. |
+| `GET`    | `/api/want`            | The want-to-watch list |
+| `POST`   | `/api/want`            | `{ id, title, poster_path?, release_date? }` adds a movie. Does nothing if it is already in either list. |
+| `DELETE` | `/api/want/{id}`       | Removes a movie from the want list |
 
 ## How it is built
 
 ```
 src/
-  Controller/      AuthController, MovieController, WatchedController: thin, #[Route] + #[IsGranted]
+  Controller/      AuthController, MovieController, WatchedController, WantController: thin, #[Route] + #[IsGranted]
   Dto/             request bodies and queries, bound with #[MapRequestPayload] / #[MapQueryString] and validated with #[Assert\...]
-  Entity/          User, WatchedMovie (one row per movie, unique per user + TMDB id)
+  Entity/          User, WatchedMovie (one row per movie, unique per user + TMDB id; status says watched or wanted)
+  Enum/            MovieStatus: watched or want
   Repository/      queries; UserRepository also loads users for login (case-insensitive)
-  Service/         WatchList (watched-list logic), TmdbClient (TMDB calls + cache)
+  Service/         WatchList (watched and want-list logic), TmdbClient (TMDB calls + cache)
   Security/        AuthenticationFailureHandler: the 401 JSON on a bad login
   EventListener/   ApiExceptionListener (JSON errors), LogoutListener (204 instead of a redirect)
 config/packages/

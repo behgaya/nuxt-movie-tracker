@@ -2,12 +2,15 @@
 const props = defineProps<{
   movies: T[]
   watchedById: Map<number, WatchedMovie>
+  // Pass it to show a want-to-watch button on unwatched cards
+  wantedIds?: Set<number>
   selectable?: boolean
   selected?: number[]
 }>()
 
 const emit = defineEmits<{
   toggle: [movie: T]
+  want: [movie: T]
   review: [id: number, input: ReviewInput]
   select: [id: number]
 }>()
@@ -26,22 +29,25 @@ function openReview(id: number) {
 </script>
 
 <template>
-  <v-row>
-    <v-col v-for="movie in movies" :key="movie.id" cols="6" sm="4" md="3" lg="2">
+  <!-- As many columns as fit at a minimum card width (main.css), so smaller screens show fewer, wider cards -->
+  <div class="movie-grid">
+    <div v-for="movie in movies" :key="movie.id">
       <MovieCard
         :movie="movie"
         :watched="watchedById.has(movie.id)"
+        :wanted="wantedIds?.has(movie.id)"
         :review="watchedById.get(movie.id)"
         :selectable="selectable"
         :selected="selected?.includes(movie.id)"
         @toggle="emit('toggle', movie)"
+        @want="emit('want', movie)"
         @review="openReview(movie.id)"
         @select="emit('select', movie.id)"
       >
         <slot name="note" :movie="movie" />
       </MovieCard>
-    </v-col>
-  </v-row>
+    </div>
+  </div>
 
   <ReviewDialog
     v-model="dialogOpen"

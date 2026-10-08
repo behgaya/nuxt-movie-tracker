@@ -15,6 +15,8 @@ final class RecommendationControllerTest extends ApiTestCase
         3 => [13],
         4 => [[21, 4.0, 1000], [20, 9.0, 1000], [22, 9.0, 10]],
         5 => [[23, 4.0, 1000], [21, 4.0, 1000]],
+        6 => [30, 31, 32, 33, 34, 35, 36, 37],
+        7 => [40, 41],
     ];
 
     /** @var list<string> URLs the API asked TMDB for */
@@ -79,6 +81,18 @@ final class RecommendationControllerTest extends ApiTestCase
         // 20 (score 9.0) overtakes 23 (score 4.0) even though TMDB listed it lower.
         // 22 has only 10 votes, so it is left out.
         self::assertSame([21, 20, 23], array_column($list, 'id'));
+    }
+
+    public function testALovedSeedDoesNotCrowdOutTheOthers(): void
+    {
+        $this->request('POST', '/api/watched/bulk', ['add' => [['id' => 6, 'title' => 'Loved'], ['id' => 7, 'title' => 'Unrated']]]);
+        $this->request('PATCH', '/api/watched/6', ['rating' => 5]);
+
+        $list = $this->request('GET', '/api/recommendations');
+
+        // Without the decay, all eight of the 5-star seed's movies would come before 40 and 41.
+        // The loved seed still leads, but each pick it gets makes its next one count less.
+        self::assertSame([30, 31, 32, 40, 33, 41, 34, 35, 36, 37], array_column($list, 'id'));
     }
 
     public function testSkipsSeedsTmdbDoesNotKnow(): void

@@ -1,10 +1,15 @@
-type MovieInput = Pick<WatchedMovie, 'id' | 'title' | 'poster_path' | 'release_date'>
-
 export function useWatched() {
   const { data, status } = useFetch<WatchedMovie[]>('/api/watched', {
     key: 'watched',
     default: () => [],
   })
+
+  // The server moves a wanted movie to the watched list once you mark it seen.
+  // Drop it from the cached want list too, if that list was loaded, instead of fetching it again.
+  const { data: wanted } = useNuxtData<WantedMovie[]>('want')
+  function leaveWantList(ids: number[]) {
+    if (wanted.value) wanted.value = wanted.value.filter(m => !ids.includes(m.id))
+  }
 
   const watchedById = computed(() => new Map(data.value.map(m => [m.id, m])))
 
@@ -14,6 +19,7 @@ export function useWatched() {
       method: 'POST',
       body: { id, title, poster_path, release_date },
     })
+    leaveWantList([id])
   }
 
   async function unmarkWatched(id: number) {
@@ -33,6 +39,7 @@ export function useWatched() {
         remove,
       },
     })
+    leaveWantList(add.map(m => m.id))
   }
 
   async function saveReview(id: number, input: ReviewInput) {

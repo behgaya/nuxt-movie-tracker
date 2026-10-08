@@ -17,6 +17,7 @@ const { data, status } = await useFetch('/api/movies', {
 })
 
 const { watchedById, toggle, bulkUpdate, saveReview } = useWatched()
+const { wantedIds, toggleWanted } = useWantToWatch()
 
 function search() {
   navigateTo({ query: { q: input.value?.trim() || undefined } }) // a new search starts at page 1
@@ -88,10 +89,12 @@ async function removeSelected() {
     <MovieGrid
       :movies="results"
       :watched-by-id="watchedById"
+      :wanted-ids="wantedIds"
       :selectable="selecting"
       :selected="selected"
       @select="toggleSelected"
       @toggle="toggle"
+      @want="toggleWanted"
       @review="saveReview"
     />
 

@@ -3,7 +3,7 @@ const { user, clear } = useAuth()
 
 async function logout() {
   await clear() // ends the session on the API
-  clearNuxtData('watched') // forget this user's cached list
+  clearNuxtData(['watched', 'want']) // forget this user's cached lists
   await navigateTo('/login')
 }
 </script>
@@ -20,7 +20,10 @@ async function logout() {
     <v-app-bar-title class="brand d-none d-sm-flex">My <span class="text-primary">Movies</span></v-app-bar-title>
     <v-btn to="/" variant="text" active-color="primary" prepend-icon="mdi-check-circle-outline" exact>Watched</v-btn>
     <v-btn to="/movies" variant="text" active-color="primary" prepend-icon="mdi-movie-search-outline" >All movies</v-btn>
-    <!-- Icon only on phones, so three buttons still fit next to the logo -->
+    <!-- Icon only on phones, so four buttons still fit next to the logo -->
+    <v-btn to="/want" variant="text" active-color="primary" prepend-icon="mdi-bookmark-outline" title="Want to watch">
+      <span class="d-none d-sm-inline">To watch</span>
+    </v-btn>
     <v-btn to="/recommended" variant="text" active-color="primary" prepend-icon="mdi-star-shooting-outline" title="For you">
       <span class="d-none d-sm-inline">For you</span>
     </v-btn>

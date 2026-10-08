@@ -43,9 +43,11 @@ useSeoMeta({
   ogImage: () => movie.value?.backdrop_path ? tmdbImage(movie.value.backdrop_path, 'w1280') : undefined,
 })
 
-// ── Watched & review ───────────────────────────────────
+// ── Watched, want to watch & review ────────────────────
 const { watchedById, toggle, saveReview } = useWatched()
 const watchedEntry = computed(() => watchedById.value.get(id))
+const { wantedIds, toggleWanted } = useWantToWatch()
+const wanted = computed(() => wantedIds.value.has(id))
 const reviewOpen = ref(false)
 </script>
 
@@ -95,6 +97,15 @@ const reviewOpen = ref(false)
                 @click="toggle(movie)"
               >
                 {{ watchedEntry ? 'Watched' : 'Mark seen' }}
+              </v-btn>
+              <v-btn
+                v-if="!watchedEntry"
+                variant="tonal"
+                :color="wanted ? 'primary' : undefined"
+                :prepend-icon="wanted ? 'mdi-bookmark' : 'mdi-bookmark-outline'"
+                @click="toggleWanted(movie)"
+              >
+                {{ wanted ? 'On your list' : 'Want to watch' }}
               </v-btn>
               <v-btn v-if="watchedEntry" variant="tonal" prepend-icon="mdi-star-outline" @click="reviewOpen = true">
                 {{ watchedEntry.rating || watchedEntry.review ? 'Edit review' : 'Rate this movie' }}

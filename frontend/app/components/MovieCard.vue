@@ -2,12 +2,14 @@
 const props = defineProps<{
   movie: { id: number, title: string, poster_path: string | null, release_date?: string, vote_average?: number, vote_count?: number }
   watched: boolean
+  // Leave undefined to hide the want-to-watch button
+  wanted?: boolean
   review?: { rating?: number, review?: string }
   selectable?: boolean
   selected?: boolean
 }>()
 
-defineEmits<{ toggle: [], review: [], select: [] }>()
+defineEmits<{ toggle: [], want: [], review: [], select: [] }>()
 
 // The poster opens the detail page, except in selection mode where a click selects the card
 const NuxtLink = resolveComponent('NuxtLink')
@@ -18,6 +20,9 @@ const year = computed(() => props.movie.release_date?.slice(0, 4))
 // Watched movies don't store it, so cards on the Watched page show no score.
 const MIN_VOTES = 50
 const score = computed(() => (props.movie.vote_count ?? 0) >= MIN_VOTES ? props.movie.vote_average?.toFixed(1) : undefined)
+
+// Only unwatched movies can be wanted: watching one moves it to the watched list
+const showWant = computed(() => !props.watched && props.wanted !== undefined)
 </script>
 
 <template>
@@ -75,17 +80,31 @@ const score = computed(() => (props.movie.vote_count ?? 0) >= MIN_VOTES ? props.
 
     <v-spacer />
 
-    <v-card-actions class="px-3 pb-3">
+    <!-- On a narrow card the label hides and only the icon stays, so the bookmark button still fits (main.css) -->
+    <v-card-actions class="card-actions px-3 pb-3" :class="{ 'has-want': showWant }">
+      <!-- Next to the bookmark it matches that button: 40px tall with a 24px icon -->
       <v-btn
-        block
+        class="toggle-btn"
         size="small"
+        :height="showWant ? 40 : undefined"
         variant="tonal"
         :color="watched ? 'success' : 'secondary'"
-        :prepend-icon="watched ? 'mdi-check' : 'mdi-eye-outline'"
+        :title="watched ? 'Watched' : 'Mark seen'"
         @click="$emit('toggle')"
       >
-        {{ watched ? 'Watched' : 'Mark seen' }}
+        <v-icon :icon="watched ? 'mdi-check' : 'mdi-eye-outline'" :size="showWant ? 24 : undefined" />
+        <span class="toggle-label">{{ watched ? 'Watched' : 'Mark seen' }}</span>
       </v-btn>
+      <v-btn
+        v-if="showWant"
+        size="small"
+        variant="tonal"
+        :color="wanted ? 'primary' : 'secondary'"
+        :icon="wanted ? 'mdi-bookmark' : 'mdi-bookmark-outline'"
+        :title="wanted ? 'Remove from Want to watch' : 'Want to watch'"
+        :aria-pressed="wanted"
+        @click="$emit('want')"
+      />
     </v-card-actions>
   </v-card>
 </template>

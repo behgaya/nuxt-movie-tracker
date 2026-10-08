@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Entity\WatchedMovie;
+use App\Enum\MovieStatus;
 use App\Repository\WatchedMovieRepository;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -22,6 +23,13 @@ final class Recommender
     /** Below this many TMDB votes a score means little, so the movie is left out */
     public const MIN_VOTES = 50;
 
+    /**
+     * Each recommendation a seed already placed in the list makes its next ones count this much less
+     * (0.7, then 0.49, ...). Without it, one 5-star seed fills the whole list, because even its worst
+     * match outscores the best match of an unrated seed.
+     */
+    public const REPEAT_DECAY = 0.7;
+
     public function __construct(
         private readonly WatchedMovieRepository $movies,
         private readonly TmdbClient $tmdb,
@@ -33,13 +41,13 @@ final class Recommender
      */
     public function for(User $user): array
     {
-        $watched = $this->movies->listFor($user);
+        $watched = $this->movies->listFor($user, MovieStatus::Watched);
         $watchedIds = array_flip(array_map(fn (WatchedMovie $m) => $m->getTmdbId(), $watched));
 
-        $scores = [];
+        $seeds = $this->seeds($watched);
+        $points = []; // movie id => seed index => what that seed adds to the movie's score
         $found = [];
-        $because = [];
-        foreach ($this->seeds($watched) as $seed) {
+        foreach ($seeds as $s => $seed) {
             try {
                 $results = $this->tmdb->recommendations($seed->getTmdbId())['results'] ?? [];
             } catch (NotFoundHttpException) {
@@ -53,16 +61,10 @@ final class Recommender
                     continue;
                 }
                 // TMDB lists its best matches first, so earlier results count slightly more
-                $scores[$id] = ($scores[$id] ?? 0) + $weight * (1 - $rank / 40);
+                $points[$id][$s] = $weight * (1 - $rank / 40);
                 $found[$id] ??= $movie;
-                $because[$id][] = $seed->getTitle();
             }
         }
-
-        foreach ($scores as $id => $score) {
-            $scores[$id] = $score * $this->quality($found[$id]['vote_average'] ?? 0);
-        }
-        arsort($scores);
 
         return array_map(fn (int $id) => [
             'id' => $id,
@@ -72,8 +74,48 @@ final class Recommender
             'overview' => $found[$id]['overview'] ?? '',
             'vote_average' => $found[$id]['vote_average'] ?? 0,
             'vote_count' => $found[$id]['vote_count'] ?? 0,
-            'because' => $because[$id],
-        ], \array_slice(array_keys($scores), 0, self::LIMIT));
+            'because' => array_map(fn (int $s) => $seeds[$s]->getTitle(), array_keys($points[$id])),
+        ], $this->pick($points, $found));
+    }
+
+    /**
+     * Picks the best movie, one at a time. A movie's score is what each of its seeds adds, times
+     * REPEAT_DECAY for every movie that seed already got into the list, then nudged by quality().
+     * So a loved seed still leads, but the other seeds' best matches get their turn too.
+     *
+     * @param array<int, array<int, float>> $points movie id => seed index => points
+     * @param array<int, array>             $found  movie id => TMDB movie
+     *
+     * @return list<int> movie ids, best first
+     */
+    private function pick(array $points, array $found): array
+    {
+        $picked = []; // seed index => how many picked movies it recommended
+        $list = [];
+
+        while ($points && \count($list) < self::LIMIT) {
+            $best = null;
+            $bestScore = -1;
+            foreach ($points as $id => $bySeed) {
+                $score = 0;
+                foreach ($bySeed as $s => $p) {
+                    $score += $p * self::REPEAT_DECAY ** ($picked[$s] ?? 0);
+                }
+                $score *= $this->quality($found[$id]['vote_average'] ?? 0);
+                if ($score > $bestScore) {
+                    $best = $id;
+                    $bestScore = $score;
+                }
+            }
+
+            $list[] = $best;
+            foreach (array_keys($points[$best]) as $s) {
+                $picked[$s] = ($picked[$s] ?? 0) + 1;
+            }
+            unset($points[$best]);
+        }
+
+        return $list;
     }
 
     /**

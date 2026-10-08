@@ -7,12 +7,16 @@ use App\Dto\MovieInput;
 use App\Dto\ReviewInput;
 use App\Entity\User;
 use App\Entity\WatchedMovie;
+use App\Enum\MovieStatus;
 use App\Repository\WatchedMovieRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** A user's watched list. Every method returns the whole updated list, as the frontend expects. */
+/**
+ * A user's watched and want-to-watch lists. Every method returns the whole updated list
+ * it changed, as the frontend expects.
+ */
 final class WatchList
 {
     public function __construct(
@@ -22,37 +26,47 @@ final class WatchList
     }
 
     /** @return list<array> newest first */
-    public function list(User $user): array
+    public function list(User $user, MovieStatus $status = MovieStatus::Watched): array
     {
-        return array_map(fn (WatchedMovie $m) => $m->toArray(), $this->movies->listFor($user));
+        return array_map(fn (WatchedMovie $m) => $m->toArray(), $this->movies->listFor($user, $status));
     }
 
+    /** Marks a movie as watched. A wanted movie moves from the want list to the watched list. */
     public function add(User $user, MovieInput $movie): array
     {
-        if (!$this->movies->findOneFor($user, $movie->id)) {
-            $this->em->persist(new WatchedMovie($user, $movie, new \DateTimeImmutable()));
-            try {
-                $this->em->flush();
-            } catch (UniqueConstraintViolationException) {
-                // A parallel request added it first: the end result is the same, so carry on
-                $this->em->clear();
-            }
+        $existing = $this->movies->findOneFor($user, $movie->id);
+
+        if (!$existing) {
+            $this->insert(new WatchedMovie($user, $movie, MovieStatus::Watched, new \DateTimeImmutable()));
+        } elseif (MovieStatus::Want === $existing->getStatus()) {
+            $existing->markWatched(new \DateTimeImmutable());
+            $this->em->flush();
         }
 
         return $this->list($user);
     }
 
-    public function remove(User $user, int $tmdbId): array
+    /** Adds a movie to the want list. Does nothing if it is in either list already. */
+    public function want(User $user, MovieInput $movie): array
     {
-        $this->movies->removeFor($user, [$tmdbId]);
+        if (!$this->movies->findOneFor($user, $movie->id)) {
+            $this->insert(new WatchedMovie($user, $movie, MovieStatus::Want, new \DateTimeImmutable()));
+        }
 
-        return $this->list($user);
+        return $this->list($user, MovieStatus::Want);
+    }
+
+    public function remove(User $user, int $tmdbId, MovieStatus $status = MovieStatus::Watched): array
+    {
+        $this->movies->removeFor($user, $status, [$tmdbId]);
+
+        return $this->list($user, $status);
     }
 
     public function review(User $user, int $tmdbId, ReviewInput $input): array
     {
         // Only watched movies can be reviewed
-        $movie = $this->movies->findOneFor($user, $tmdbId)
+        $movie = $this->movies->findOneFor($user, $tmdbId, MovieStatus::Watched)
             ?? throw new NotFoundHttpException('Movie is not in the watched list');
 
         $movie->setReview($input->rating, $input->review);
@@ -61,22 +75,41 @@ final class WatchList
         return $this->list($user);
     }
 
-    /** Adds and removes many movies in one transaction: either all changes apply or none do */
+    /**
+     * Adds and removes many watched movies in one transaction: either all changes apply or none do.
+     * Like add(), it moves wanted movies to the watched list.
+     */
     public function bulk(User $user, BulkInput $input): array
     {
         $this->em->wrapInTransaction(function () use ($user, $input) {
-            $this->movies->removeFor($user, $input->remove);
+            $this->movies->removeFor($user, MovieStatus::Watched, $input->remove);
 
-            $existing = array_flip(array_map(fn (WatchedMovie $m) => $m->getTmdbId(), $this->movies->listFor($user)));
-            $watchedAt = new \DateTimeImmutable();
+            $existing = [];
+            foreach ([...$this->movies->listFor($user, MovieStatus::Watched), ...$this->movies->listFor($user, MovieStatus::Want)] as $m) {
+                $existing[$m->getTmdbId()] = $m;
+            }
+
+            $now = new \DateTimeImmutable();
             foreach ($input->add as $movie) {
                 if (!isset($existing[$movie->id])) {
-                    $this->em->persist(new WatchedMovie($user, $movie, $watchedAt));
-                    $existing[$movie->id] = true;
+                    $this->em->persist($existing[$movie->id] = new WatchedMovie($user, $movie, MovieStatus::Watched, $now));
+                } elseif (MovieStatus::Want === $existing[$movie->id]->getStatus()) {
+                    $existing[$movie->id]->markWatched($now);
                 }
             }
         });
 
         return $this->list($user);
+    }
+
+    private function insert(WatchedMovie $movie): void
+    {
+        $this->em->persist($movie);
+        try {
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException) {
+            // A parallel request added it first: the end result is the same, so carry on
+            $this->em->clear();
+        }
     }
 }

@@ -35,6 +35,18 @@
   letter-spacing: -0.03em;
 }
 
+/* ── Movie grid ─────────────────────────────────────── */
+/*
+ * Fits as many columns as it can without a card getting narrower than 210px, then shares out the
+ * spare width. 210px leaves room for "Mark seen" next to the bookmark, so the label stays visible.
+ */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  /* 16px between columns lets three cards fit in v-container's 700px width (screens 960–1280px wide) */
+  gap: 24px 16px;
+}
+
 /* ── Movie card ─────────────────────────────────────── */
 .movie-card {
   overflow: hidden;
@@ -68,6 +80,44 @@
   height: 35%;
   background: linear-gradient(to top, rgb(var(--v-theme-surface)), transparent);
   pointer-events: none;
+}
+
+/* The card's own width decides, not the screen's: a 6-column desktop grid has cards as narrow as a phone's */
+.card-actions {
+  container-type: inline-size;
+}
+
+.toggle-btn {
+  flex-grow: 1;
+}
+
+/* With the bookmark: seen on the left, bookmark on the right */
+.card-actions.has-want {
+  justify-content: space-between;
+}
+
+.has-want .toggle-btn {
+  flex-grow: 0;
+}
+
+.toggle-label {
+  margin-inline-start: 6px;
+}
+
+/*
+ * Too narrow for "Mark seen" next to the bookmark (they need about 172px): keep only the icon,
+ * in a 40px square like the bookmark button. The title attribute still names it.
+ */
+@container (max-width: 180px) {
+  .has-want .toggle-label {
+    display: none;
+  }
+
+  .has-want .toggle-btn {
+    width: 40px;
+    min-width: 0;
+    padding: 0;
+  }
 }
 
 /* ── Selection ──────────────────────────────────────── */

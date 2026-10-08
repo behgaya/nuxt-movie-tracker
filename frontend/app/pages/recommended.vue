@@ -2,6 +2,7 @@
 useSeoMeta({ title: 'For you' })
 
 const { watched, watchedById, toggle, saveReview } = useWatched()
+const { wantedIds, toggleWanted } = useWantToWatch()
 
 // The API builds these from your watched list and ratings, so they are fetched fresh on every visit.
 // lazy + server: false: the page shows straight away with placeholder cards, and the
@@ -32,11 +33,9 @@ function because(movie: RecommendedMovie) {
     </div>
 
     <!-- Placeholder cards in the same grid as the real ones, so nothing jumps when they arrive -->
-    <v-row v-if="loading" aria-busy="true" aria-label="Loading recommendations">
-      <v-col v-for="n in 12" :key="n" cols="6" sm="4" md="3" lg="2">
-        <v-skeleton-loader type="image, list-item-two-line, button" class="skeleton-card" />
-      </v-col>
-    </v-row>
+    <div v-if="loading" class="movie-grid" aria-busy="true" aria-label="Loading recommendations">
+      <v-skeleton-loader v-for="n in 12" :key="n" type="image, list-item-two-line, button" class="skeleton-card" />
+    </div>
 
     <v-alert
       v-else-if="error"
@@ -67,7 +66,9 @@ function because(movie: RecommendedMovie) {
       v-else
       :movies="movies"
       :watched-by-id="watchedById"
+      :wanted-ids="wantedIds"
       @toggle="toggle"
+      @want="toggleWanted"
       @review="saveReview"
     >
       <template #note="{ movie }">

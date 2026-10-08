@@ -9,6 +9,18 @@ export interface WatchedMovie {
   reviewedAt?: string // ISO date of the last review edit
 }
 
+/** A movie in the want-to-watch list. Watching it moves it to the watched list. */
+export interface WantedMovie {
+  id: number
+  title: string
+  poster_path: string | null
+  release_date?: string
+  addedAt: string
+}
+
+/** The fields the API stores when a movie is added to either list */
+export type MovieInput = Pick<WatchedMovie, 'id' | 'title' | 'poster_path' | 'release_date'>
+
 /** What the review dialog sends; null / '' clear the field */
 export interface ReviewInput {
   rating: number | null
