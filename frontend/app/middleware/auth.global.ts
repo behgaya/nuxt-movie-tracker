@@ -3,7 +3,10 @@
 export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useAuth()
 
-  if (!loggedIn.value && to.path !== '/login') {
+  // Public folders can be shared with people who have no account; the API hides private ones
+  const isFolderPage = /^\/folders\/\d+$/.test(to.path)
+
+  if (!loggedIn.value && to.path !== '/login' && !isFolderPage) {
     return navigateTo('/login')
   }
   if (loggedIn.value && to.path === '/login') {

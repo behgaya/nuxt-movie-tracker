@@ -1,9 +1,18 @@
 <script setup lang="ts">
 const { user, clear } = useAuth()
+const toast = useToast()
+
+const links = [
+  { to: '/', label: 'Watched', icon: 'mdi-check-circle-outline' },
+  { to: '/movies', label: 'All movies', icon: 'mdi-movie-search-outline' },
+  { to: '/want', label: 'To watch', icon: 'mdi-bookmark-outline' },
+  { to: '/folders', label: 'Folders', icon: 'mdi-folder-multiple-outline' },
+  { to: '/recommended', label: 'For you', icon: 'mdi-star-shooting-outline' },
+]
 
 async function logout() {
   await clear() // ends the session on the API
-  clearNuxtData(['watched', 'want']) // forget this user's cached lists
+  clearNuxtData(['watched', 'want', 'folders']) // forget this user's cached lists
   await navigateTo('/login')
 }
 </script>
@@ -18,17 +27,24 @@ async function logout() {
     </template>
     <!-- Hide the text title on phones; the logo still links home -->
     <v-app-bar-title class="brand d-none d-sm-flex">My <span class="text-primary">Movies</span></v-app-bar-title>
-    <v-btn to="/" variant="text" active-color="primary" prepend-icon="mdi-check-circle-outline" exact>Watched</v-btn>
-    <v-btn to="/movies" variant="text" active-color="primary" prepend-icon="mdi-movie-search-outline" >All movies</v-btn>
-    <!-- Icon only on phones, so four buttons still fit next to the logo -->
-    <v-btn to="/want" variant="text" active-color="primary" prepend-icon="mdi-bookmark-outline" title="Want to watch">
-      <span class="d-none d-sm-inline">To watch</span>
-    </v-btn>
-    <v-btn to="/recommended" variant="text" active-color="primary" prepend-icon="mdi-star-shooting-outline" title="For you">
-      <span class="d-none d-sm-inline">For you</span>
+    <!-- Labels from 960px up; below that only the icons fit (the title still names each one) -->
+    <v-btn
+      v-for="link in links"
+      :key="link.to"
+      :to="link.to"
+      :exact="link.to === '/'"
+      :title="link.label"
+      :prepend-icon="link.icon"
+      variant="text"
+      active-color="primary"
+      class="nav-link"
+    >
+      <span class="d-none d-md-inline">{{ link.label }}</span>
     </v-btn>
 
-    <v-menu v-if="user" location="bottom end">
+    <!-- Logged-out visitors only get here through a public folder link -->
+    <v-btn v-if="!user" to="/login" color="primary" variant="flat" class="mx-2">Log in</v-btn>
+    <v-menu v-else location="bottom end">
       <template #activator="{ props }">
         <v-btn v-bind="props" icon class="mx-2" :title="user.username">
           <v-avatar color="primary" size="34">
@@ -47,4 +63,6 @@ async function logout() {
   <v-main style="padding-top: 64px">
     <slot />
   </v-main>
+
+  <v-snackbar :model-value="!!toast.message.value" timeout="3000" @update:model-value="toast.show('')">{{ toast.message.value }}</v-snackbar>
 </template>

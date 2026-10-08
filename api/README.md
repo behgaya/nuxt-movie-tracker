@@ -30,7 +30,7 @@ docker compose exec php sh -c 'bin/console doctrine:database:create --env=test &
 
 ## Routes
 
-Every route except `/api/auth/*` needs a logged-in session. Errors are always JSON: `{ "statusCode": 400, "message": "..." }`. Every `/api/watched` and `/api/want` route answers with the whole updated list, newest first.
+Every route except `/api/auth/*` and `GET /api/folders/{id}` needs a logged-in session. Errors are always JSON: `{ "statusCode": 400, "message": "..." }`. Every `/api/watched` and `/api/want` route answers with the whole updated list, newest first.
 
 | Method   | Route                  | Description |
 | -------- | ---------------------- | ----------- |
@@ -48,18 +48,27 @@ Every route except `/api/auth/*` needs a logged-in session. Errors are always JS
 | `GET`    | `/api/want`            | The want-to-watch list |
 | `POST`   | `/api/want`            | `{ id, title, poster_path?, release_date? }` adds a movie. Does nothing if it is already in either list. |
 | `DELETE` | `/api/want/{id}`       | Removes a movie from the want list |
+| `GET`    | `/api/folders`         | Your folders by name: `{ id, name, isPublic, movieIds, posters }` |
+| `POST`   | `/api/folders`         | `{ name: 1–50 chars, isPublic? }` creates a folder. 409 if you already have one with that name. |
+| `GET`    | `/api/folders/{id}`    | One folder with its movies. Open to everyone for a public folder, also logged out; otherwise 404 for anyone but the owner. |
+| `PUT`    | `/api/folders/{id}`    | `{ name, isPublic }` renames it or changes who can see it. Owner only. |
+| `DELETE` | `/api/folders/{id}`    | Deletes the folder (not its movies). Owner only. |
+| `POST`   | `/api/folders/{id}/movies` | `{ id, title, poster_path?, release_date? }` adds any movie. Owner only. |
+| `DELETE` | `/api/folders/{id}/movies/{movieId}` | Removes a movie from the folder. Owner only. |
+| `POST`   | `/api/folders/{id}/movies/bulk` | `{ add: Movie[], remove: id[] }`, at most 500 items, in one transaction. Owner only. Moving to another folder is a bulk add there, then a bulk remove here. |
 
 ## How it is built
 
 ```
 src/
-  Controller/      AuthController, MovieController, WatchedController, WantController: thin, #[Route] + #[IsGranted]
+  Controller/      AuthController, MovieController, WatchedController, WantController, FolderController: thin, #[Route] + #[IsGranted]
   Dto/             request bodies and queries, bound with #[MapRequestPayload] / #[MapQueryString] and validated with #[Assert\...]
   Entity/          User, WatchedMovie (one row per movie, unique per user + TMDB id; status says watched or wanted)
+                   Folder (a user's named list) and Movie (one shared row per TMDB movie), linked ManyToMany through folder_movie
   Enum/            MovieStatus: watched or want
   Repository/      queries; UserRepository also loads users for login (case-insensitive)
-  Service/         WatchList (watched and want-list logic), TmdbClient (TMDB calls + cache)
-  Security/        AuthenticationFailureHandler: the 401 JSON on a bad login
+  Service/         WatchList (watched and want-list logic), Folders (folder logic), TmdbClient (TMDB calls + cache)
+  Security/        AuthenticationFailureHandler: the 401 JSON on a bad login; FolderVoter: who may view or change a folder
   EventListener/   ApiExceptionListener (JSON errors), LogoutListener (204 instead of a redirect)
 config/packages/
   security.yaml    json_login firewall, session-based, access_control for /api

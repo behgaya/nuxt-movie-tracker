@@ -6,6 +6,7 @@ const props = defineProps<{
   wantedIds?: Set<number>
   selectable?: boolean
   selected?: number[]
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -38,6 +39,7 @@ function openReview(id: number) {
         :wanted="wantedIds?.has(movie.id)"
         :review="watchedById.get(movie.id)"
         :selectable="selectable"
+        :readonly="readonly"
         :selected="selected?.includes(movie.id)"
         @toggle="emit('toggle', movie)"
         @want="emit('want', movie)"

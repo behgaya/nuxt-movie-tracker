@@ -29,6 +29,19 @@
   background: radial-gradient(ellipse at top, rgb(var(--v-theme-primary) / 0.12), transparent 60%);
 }
 
+/* ── Nav ──────────────────────────────────────────── */
+/* Below 960px the nav buttons are icon only (default.vue): drop the gap meant for the label, and narrow them */
+@media (max-width: 959.98px) {
+  .nav-link {
+    min-width: 0;
+    padding-inline: 10px;
+  }
+
+  .nav-link .v-btn__prepend {
+    margin-inline: 0;
+  }
+}
+
 /* ── Page headings ──────────────────────────────────── */
 .page-title {
   font-weight: 800;
@@ -38,7 +51,7 @@
 /* ── Movie grid ─────────────────────────────────────── */
 /*
  * Fits as many columns as it can without a card getting narrower than 210px, then shares out the
- * spare width. 210px leaves room for "Mark seen" next to the bookmark, so the label stays visible.
+ * spare width, so smaller screens get fewer, wider cards with room for long titles.
  */
 .movie-grid {
   display: grid;
@@ -49,6 +62,7 @@
 
 /* ── Movie card ─────────────────────────────────────── */
 .movie-card {
+  position: relative; /* anchors the folder button in the poster corner */
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -82,44 +96,6 @@
   pointer-events: none;
 }
 
-/* The card's own width decides, not the screen's: a 6-column desktop grid has cards as narrow as a phone's */
-.card-actions {
-  container-type: inline-size;
-}
-
-.toggle-btn {
-  flex-grow: 1;
-}
-
-/* With the bookmark: seen on the left, bookmark on the right */
-.card-actions.has-want {
-  justify-content: space-between;
-}
-
-.has-want .toggle-btn {
-  flex-grow: 0;
-}
-
-.toggle-label {
-  margin-inline-start: 6px;
-}
-
-/*
- * Too narrow for "Mark seen" next to the bookmark (they need about 172px): keep only the icon,
- * in a 40px square like the bookmark button. The title attribute still names it.
- */
-@container (max-width: 180px) {
-  .has-want .toggle-label {
-    display: none;
-  }
-
-  .has-want .toggle-btn {
-    width: 40px;
-    min-width: 0;
-    padding: 0;
-  }
-}
-
 /* ── Selection ──────────────────────────────────────── */
 .movie-card.is-selected {
   box-shadow: 0 0 0 2px rgb(var(--v-theme-primary));
@@ -139,6 +115,26 @@
   top: 72px;
   z-index: 5;
   border: 1px solid rgb(var(--v-theme-primary) / 0.4) !important;
+}
+
+/*
+ * Round buttons in the poster's top corners (MovieCard): folders on the left, the want-to-watch
+ * bookmark on the right. Hidden in selection mode, where the checkbox takes the left corner.
+ */
+.card-corner-btn {
+  position: absolute !important;
+  top: 6px;
+  z-index: 2;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+}
+
+.card-corner-left {
+  left: 6px;
+}
+
+.card-corner-right {
+  right: 6px;
 }
 
 .watched-badge {

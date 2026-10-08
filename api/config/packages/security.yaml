@@ -27,6 +27,8 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/api/auth/, roles: PUBLIC_ACCESS }
+        # Public folders can be viewed without logging in; FolderVoter decides who sees which folder
+        - { path: ^/api/folders/\d+$, methods: [GET], roles: PUBLIC_ACCESS }
         - { path: ^/api/, roles: ROLE_USER }
 
 when@test:

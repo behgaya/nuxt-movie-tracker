@@ -18,7 +18,7 @@ abstract class ApiTestCase extends WebTestCase
         $this->client->disableReboot(); // keep container overrides (e.g. a mocked TMDB client) between requests
 
         $connection = static::getContainer()->get(EntityManagerInterface::class)->getConnection();
-        $connection->executeStatement('TRUNCATE "user", watched_movie RESTART IDENTITY CASCADE');
+        $connection->executeStatement('TRUNCATE "user", watched_movie, folder, folder_movie, movie RESTART IDENTITY CASCADE');
         static::getContainer()->get('cache.app')->clear();
     }
 

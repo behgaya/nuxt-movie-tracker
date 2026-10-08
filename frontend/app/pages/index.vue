@@ -38,6 +38,8 @@ watch(filtered, (list) => {
   selected.value = selected.value.filter(id => visible.has(id))
 })
 
+const selectedMovies = computed(() => watched.value.filter(m => selected.value.includes(m.id)))
+
 async function removeSelected() {
   await bulkUpdate({ remove: selected.value })
   stopSelecting()
@@ -85,6 +87,7 @@ async function removeSelected() {
         @clear="clear"
         @close="stopSelecting"
       >
+        <FolderPickerMenu :movies="selectedMovies" :after="stopSelecting" />
         <v-btn color="error" variant="flat" prepend-icon="mdi-delete-outline" :disabled="!selected.length" @click="confirmRemove = true">
           Remove ({{ selected.length }})
         </v-btn>

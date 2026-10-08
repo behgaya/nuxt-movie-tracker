@@ -110,6 +110,7 @@ const reviewOpen = ref(false)
               <v-btn v-if="watchedEntry" variant="tonal" prepend-icon="mdi-star-outline" @click="reviewOpen = true">
                 {{ watchedEntry.rating || watchedEntry.review ? 'Edit review' : 'Rate this movie' }}
               </v-btn>
+              <AddToFolderMenu :movie="movie" />
               <v-btn v-if="trailer" variant="tonal" prepend-icon="mdi-play" @click="showTrailer = true">Trailer</v-btn>
             </div>
 

@@ -79,6 +79,7 @@ async function removeSelected() {
       <v-btn color="primary" variant="flat" prepend-icon="mdi-eye-plus" :disabled="!toAdd.length" @click="addSelected">
         Mark seen ({{ toAdd.length }})
       </v-btn>
+      <FolderPickerMenu :movies="selectedMovies" :after="stopSelecting" />
       <v-btn color="error" variant="tonal" prepend-icon="mdi-delete-outline" :disabled="!toRemove.length" @click="confirmRemove = true">
         Remove ({{ toRemove.length }})
       </v-btn>
